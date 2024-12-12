@@ -3,11 +3,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Tuple
 
-from typing_extensions import TypeVar
-
 KV_REGEX = r'(\w+)=(".*?"|\S+)'
-
-TDataType = TypeVar("TDataType", bound="DataType")
 
 
 class DataType(Enum):
@@ -28,18 +24,18 @@ class DataType(Enum):
         else:
             raise ValueError(f"Unknown data type: {self}")
 
-
-def parse_string_to_data_type(data_type: str) -> DataType:
-    if data_type == "S":
-        return DataType.STRING
-    elif data_type == "R":
-        return DataType.REAL
-    elif data_type == "I":
-        return DataType.INT
-    elif data_type == "B":
-        return DataType.BOOL
-    else:
-        raise ValueError(f"Unknown data type: {data_type}")
+    @staticmethod
+    def from_string(data_type: str) -> DataType:
+        if data_type == "S":
+            return DataType.STRING
+        elif data_type == "R":
+            return DataType.REAL
+        elif data_type == "I":
+            return DataType.INT
+        elif data_type == "B":
+            return DataType.BOOL
+        else:
+            raise ValueError(f"Unknown data type: {data_type}")
 
 
 @dataclass
@@ -74,7 +70,7 @@ class ExtXYZReader:
         properties_list = []
         for i in range(0, len(properties), 3):
             label = properties[i]
-            datatype = parse_string_to_data_type(properties[i + 1])
+            datatype = DataType.from_string(properties[i + 1])
             column_count = int(properties[i + 2])
             properties_list.append(FrameProperties(label, datatype, column_count))
         kv_dict["Properties"] = properties_list
@@ -153,7 +149,7 @@ class ExtXYZReader:
 
     def __iter__(self):
         return self
-    
+
     def __next__(self):
         return self.__read_frame()
 
@@ -162,5 +158,3 @@ class ExtXYZReader:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.file.close()
-
-
