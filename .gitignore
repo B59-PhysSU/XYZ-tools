@@ -1,2 +1,3 @@
-__pychache__/
 poetry.lock
+# ignore pychache on all directories
+**/*/__pycache__/

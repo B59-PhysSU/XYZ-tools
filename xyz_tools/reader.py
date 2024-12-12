@@ -25,7 +25,7 @@ class DataType(Enum):
             raise ValueError(f"Unknown data type: {self}")
 
     @staticmethod
-    def from_string(data_type: str) -> DataType:
+    def from_string(data_type: str) -> 'DataType':
         if data_type == "S":
             return DataType.STRING
         elif data_type == "R":
