@@ -6,8 +6,8 @@ Currently supported:
 
 ## Reading
 
-- [ x] Ovito Extended XYZ
-- [  ] Basic XYZ
+- [x] Ovito Extended XYZ
+- [ ] Basic XYZ
 
 ## Writing
 
