@@ -1,1 +1,1 @@
-from .reader import ExtXYZReader
+from .extended_reader import ExtXYZReader

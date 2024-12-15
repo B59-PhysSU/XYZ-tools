@@ -3,37 +3,39 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Tuple
 
+import pandas as pd
+
 KV_REGEX = r'(\w+)=(".*?"|\S+)'
 
 
-class DataType(Enum):
+class ColumnDataType(Enum):
     STRING = 1
     REAL = 2
     INT = 3
     BOOL = 4
 
     def get_parser(self) -> Callable[[str], Any]:
-        if self == DataType.STRING:
+        if self == ColumnDataType.STRING:
             return str
-        elif self == DataType.REAL:
+        elif self == ColumnDataType.REAL:
             return float
-        elif self == DataType.INT:
+        elif self == ColumnDataType.INT:
             return int
-        elif self == DataType.BOOL:
+        elif self == ColumnDataType.BOOL:
             return bool
         else:
             raise ValueError(f"Unknown data type: {self}")
 
     @staticmethod
-    def from_string(data_type: str) -> 'DataType':
+    def from_string(data_type: str) -> "ColumnDataType":
         if data_type == "S":
-            return DataType.STRING
+            return ColumnDataType.STRING
         elif data_type == "R":
-            return DataType.REAL
+            return ColumnDataType.REAL
         elif data_type == "I":
-            return DataType.INT
+            return ColumnDataType.INT
         elif data_type == "B":
-            return DataType.BOOL
+            return ColumnDataType.BOOL
         else:
             raise ValueError(f"Unknown data type: {data_type}")
 
@@ -41,17 +43,34 @@ class DataType(Enum):
 @dataclass
 class FrameProperties:
     label: str
-    datatype: DataType
+    datatype: ColumnDataType
     column_count: int
 
 
 @dataclass
-class XYZFrame:
+class ExtXYZFrame:
     num_atoms: int
     LatticeVectors: List[Tuple[float, float, float]]
     FrameProperties: List[FrameProperties]
     ExtraKV: Dict[str, str | int | float | bool]
     data: Dict[str, Any]
+
+    def as_pandas_df(self, flatten_complex=True):
+        if not flatten_complex:
+            return pd.DataFrame(self.data)
+
+        complex_keys = [k for k, v in self.data.items() if isinstance(v[0], list)]
+
+        if not complex_keys:
+            return pd.DataFrame(self.data)
+
+        df = pd.DataFrame({k: self.data[k] for k in self.data if k not in complex_keys})
+
+        for key in complex_keys:
+            for i in range(len(self.data[key][0])):
+                df[f"{key}_{i}"] = [val[i] for val in self.data[key]]
+
+        return df
 
 
 class ExtXYZReader:
@@ -70,7 +89,7 @@ class ExtXYZReader:
         properties_list = []
         for i in range(0, len(properties), 3):
             label = properties[i]
-            datatype = DataType.from_string(properties[i + 1])
+            datatype = ColumnDataType.from_string(properties[i + 1])
             column_count = int(properties[i + 2])
             properties_list.append(FrameProperties(label, datatype, column_count))
         kv_dict["Properties"] = properties_list
@@ -102,7 +121,7 @@ class ExtXYZReader:
 
         return kv_dict
 
-    def __read_frame(self) -> XYZFrame:
+    def __read_frame(self) -> ExtXYZFrame:
         num_atoms = int(next(self.file))
         comment = self.file.__next__()
         structured_comment = self.__parse_extended_comment(comment)
@@ -132,7 +151,7 @@ class ExtXYZReader:
 
                 offset += prop.column_count
 
-        return XYZFrame(
+        return ExtXYZFrame(
             num_atoms=num_atoms,
             LatticeVectors=structured_comment["Lattice"],
             FrameProperties=structured_comment["Properties"],
