@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -52,7 +52,7 @@ class ExtXYZFrame:
     num_atoms: int
     LatticeVectors: List[Tuple[float, float, float]]
     FrameProperties: List[FrameProperties]
-    ExtraKV: Dict[str, str | int | float | bool]
+    ExtraKV: Optional[Dict[str, str | int | float | bool]]
     data: Dict[str, Any]
 
     def as_pandas_df(self, flatten_complex=True):
